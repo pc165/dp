@@ -54,7 +54,7 @@ fn attack_rc4() -> (u8, Vec<u8>) {
 
     let mut key = vec![];
     println!("m[0] = {}\n", m0);
-    for n in 3..12 {
+    for n in 3..16 {
         let d = calc_d(n);
         let iv_map = load_file(&format!("data/bytes_{:02X}FFxx.dat", n));
         let kn = rc4_guess_m_for_iv(iv_map, |x, c| {
