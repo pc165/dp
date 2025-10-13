@@ -83,6 +83,7 @@ fn rc4_encrypt(key: &[u8], plaintext: &[u8]) -> Vec<u8> {
     ciphertext
 }
 
+// Generate a key with the given IV format: (z, 0xFF, x, 3, 4, ..., 15)
 fn generate_key_with_iv(z: u8, x: u8) -> (u32, [u8; 16]) {
     let mut key = [0u8; 16];
 
@@ -98,9 +99,10 @@ fn generate_key_with_iv(z: u8, x: u8) -> (u32, [u8; 16]) {
     (((z as u32) << 16) | 0x00FF00 | (x as u32), key)
 }
 
+// Generate synthetic data for a given z value
 fn generate_iv_z_ff_x(z: u8) -> HashMap<u32, u8> {
     (0x00..=0xFF)
-        .map(move |x| {
+        .map(|x| {
             let (iv, key) = generate_key_with_iv(z, x);
             let plaintext = b"my secret message";
             let ciphertext = rc4_encrypt(&key, plaintext);
