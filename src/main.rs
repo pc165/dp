@@ -122,7 +122,7 @@ fn main() {
         .map(|z| load_file(&format!("data/bytes_{:02X}FFxx.dat", z)))
         .collect();
 
-    println!("Generate synthetic rc4 encrypted data with key (3, 4, ..., 15)");
+    println!("Generate synthetic rc4 encrypted data with key [3, 4, 5, 6, 7, 8, 9, a, b, c, d, e, f]");
     let synthetic_data = (1..=1)
         .chain(3..16)
         .map(|z| generate_iv_z_ff_x(z as u8))
