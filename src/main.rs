@@ -10,6 +10,8 @@ fn from_str_hex_to_u8(s: &str) -> u8 {
     u8::from_str_radix(s.strip_prefix("0X").unwrap(), 16).expect("Unable to parse integer")
 }
 
+// Function that computes the most likely plaintext byte given a map of (iv, cipher) pairs
+// and a function f(iv, cipher) -> plaintext
 fn rc4_guess_m_for_iv(c: &HashMap<u32, u8>, f: impl Fn(u8, u8) -> u8) -> u8 {
     let freq = c
         .into_iter()
@@ -39,6 +41,7 @@ fn load_file(path: &str) -> HashMap<u32, u8> {
         .collect()
 }
 
+// Main attack function
 fn attack_rc4(data: Vec<HashMap<u32, u8>>) -> (u8, Vec<u8>) {
     let iv01 = data.get(0).unwrap();
     let m0 = rc4_guess_m_for_iv(iv01, |iv, c| c ^ (iv.wrapping_add(2)));
