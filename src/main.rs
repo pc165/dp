@@ -122,7 +122,9 @@ fn main() {
         .map(|z| load_file(&format!("data/bytes_{:02X}FFxx.dat", z)))
         .collect();
 
-    println!("Generate synthetic rc4 encrypted data with key [3, 4, 5, 6, 7, 8, 9, a, b, c, d, e, f]");
+    println!(
+        "Generate synthetic rc4 encrypted data with key [3, 4, 5, 6, 7, 8, 9, a, b, c, d, e, f]"
+    );
     let synthetic_data = (1..=1)
         .chain(3..16)
         .map(|z| generate_iv_z_ff_x(z as u8))
@@ -131,9 +133,8 @@ fn main() {
     assert_eq!(lab_data.len(), 14);
     assert_eq!(synthetic_data.len(), 14);
 
-    let k2 = attack_rc4(synthetic_data);
-    println!("RC4 key for synthetic data: {:0x?}", k2);
-
-    let k = attack_rc4(lab_data);
-    println!("RC4 key for lab data: {:02x?}", k);
+    let (m0, k) = attack_rc4(synthetic_data);
+    println!("RC4 key for synthetic data: {:02x?}, {:02x?}", m0, k);
+    let (m0, k) = attack_rc4(lab_data);
+    println!("RC4 key for lab data: {:02x?}, {:02x?}", m0, k);
 }
