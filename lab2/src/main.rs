@@ -136,6 +136,12 @@ impl MD5 {
         println!("Count: {}", self.count);
         println!("Buffer: {:02x?}", self.buffer);
     }
+
+    fn hmac(key: &[u8], data: &[u8]) -> String {
+        let mut key_clone = key.to_vec();
+        key_clone.extend_from_slice(data);
+        MD5::digest_hex(&key_clone)
+    }
 }
 
 fn main() {
