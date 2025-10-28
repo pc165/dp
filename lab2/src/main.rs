@@ -221,15 +221,19 @@ fn main() {
     let key = "Aaaaaa";
     let msg = [b'A', b'A'];
     let msg2 = [b'B', b'B'];
+    println!("key 0x{}", to_hex_string(key.as_bytes()));
+    println!("original message 0x{}", to_hex_string(&msg));
+    println!("message to append 0x{}", to_hex_string(&msg2));
 
     let tag = MD5::hmac(key.as_bytes(), &msg);
-    println!("original tag {}", to_hex_string(&tag));
+    println!("original tag 0x{}", to_hex_string(&tag));
 
     let (forged_tag, msg_forged) = prolongation_attack(tag, key.len(), &msg, &msg2);
-    println!("forged tag {}", to_hex_string(&forged_tag));
+    println!("forged tag 0x{}", to_hex_string(&forged_tag));
+    println!("forged msg 0x{}", to_hex_string(&msg_forged));
 
     let actual_tag = MD5::hmac(key.as_bytes(), &msg_forged);
-    println!("actual tag {}", to_hex_string(&actual_tag));
+    println!("actual tag 0x{}", to_hex_string(&actual_tag));
 
     assert_eq!(forged_tag, actual_tag);
 }
