@@ -15,6 +15,7 @@ const K: [u32; 64] = [
     0x6fa87e4f, 0xfe2ce6e0, 0xa3014314, 0x4e0811a1, 0xf7537e82, 0xbd3af235, 0x2ad7d2bb, 0xeb86d391,
 ];
 
+#[derive(Debug)]
 struct MD5 {
     pub state: [u32; 4],
     pub count: u64,
@@ -118,6 +119,8 @@ impl MD5 {
             result[i * 4..(i + 1) * 4].copy_from_slice(&bytes);
         }
 
+        // self.debug();
+
         result
     }
 
@@ -132,19 +135,21 @@ impl MD5 {
     }
 
     fn debug(&self) {
-        println!("State: {:08x?}", self.state);
-        println!("Count: {}", self.count);
-        println!("Buffer: {:02x?}", self.buffer);
+        println!("{:?}", self);
     }
 
-    fn hmac(key: &[u8], data: &[u8]) -> String {
+    fn hmac(key: &[u8], data: &[u8]) -> [u8; 16] {
         let mut key_clone = key.to_vec();
         key_clone.extend_from_slice(data);
-        MD5::digest_hex(&key_clone)
+        let mut md5 = MD5::new();
+        md5.update(&key_clone);
+        let hash = md5.finalize();
+        hash
     }
 }
 
-fn main() {
+#[test]
+fn test_md5() {
     vec![
         ("", "d41d8cd98f00b204e9800998ecf8427e"),
         ("a", "0cc175b9c0f1b6a831c399e269772661"),
@@ -168,4 +173,63 @@ fn main() {
         let result = MD5::digest_hex(input.as_bytes());
         assert_eq!(result, expected);
     });
+}
+
+fn prolongation_attack(
+    tag: [u8; 16],
+    key_length: usize,
+    msg: &[u8],
+    new_msg: &[u8],
+) -> ([u8; 16], Vec<u8>) {
+    // calculate padding for original message
+    let mut msg_padded = msg.to_vec();
+    msg_padded.extend_from_slice(&[0x80]);
+
+    while (msg_padded.len() + key_length) % 64 != 56 {
+        msg_padded.push(0x00);
+    }
+
+    let original_len = (msg.len() + key_length) as u64 * 8;
+    msg_padded.extend_from_slice(&original_len.to_le_bytes());
+
+    // reconstruct internal state from tag
+    let mut md5 = MD5::new();
+    md5.state[0] = u32::from_le_bytes([tag[0], tag[1], tag[2], tag[3]]);
+    md5.state[1] = u32::from_le_bytes([tag[4], tag[5], tag[6], tag[7]]);
+    md5.state[2] = u32::from_le_bytes([tag[8], tag[9], tag[10], tag[11]]);
+    md5.state[3] = u32::from_le_bytes([tag[12], tag[13], tag[14], tag[15]]);
+
+    // calculate total for padded message
+    md5.count = (msg_padded.len() + key_length) as u64;
+
+    // md5.debug();
+
+    // process new message
+    md5.update(&new_msg);
+
+    let hash = md5.finalize();
+    msg_padded.extend_from_slice(&new_msg);
+
+    (hash, msg_padded)
+}
+
+fn to_hex_string(bytes: &[u8]) -> String {
+    bytes.iter().map(|b| format!("{:02x}", b)).collect()
+}
+
+fn main() {
+    let key = "Aaaaaa";
+    let msg = [b'A', b'A'];
+    let msg2 = [b'B', b'B'];
+
+    let tag = MD5::hmac(key.as_bytes(), &msg);
+    println!("original tag {}", to_hex_string(&tag));
+
+    let (forged_tag, msg_forged) = prolongation_attack(tag, key.len(), &msg, &msg2);
+    println!("forged tag {}", to_hex_string(&forged_tag));
+
+    let actual_tag = MD5::hmac(key.as_bytes(), &msg_forged);
+    println!("actual tag {}", to_hex_string(&actual_tag));
+
+    assert_eq!(forged_tag, actual_tag);
 }
